@@ -1,0 +1,92 @@
+import tensorflow as tf
+import cv2
+import pandas as pd
+import nltk
+from nltk.corpus import stopwords
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Download NLTK stopwords
+nltk.download('stopwords')
+
+# Load the dataset of Indian recipes
+recipes = pd.read_csv('indian_recipes.csv')  # Assume the CSV contains columns like 'recipe_name', 'ingredients', 'cuisine'
+
+# Preprocess text by removing stopwords
+def preprocess_text(text):
+    stop_words = set(stopwords.words('english'))
+    words = text.split()
+    filtered_words = [word for word in words if word.lower() not in stop_words]
+    return ' '.join(filtered_words)
+
+# Apply preprocessing to the ingredients column
+recipes['processed_ingredients'] = recipes['ingredients'].apply(preprocess_text)
+
+# Vectorize the processed ingredients
+vectorizer = TfidfVectorizer()
+ingredients_matrix = vectorizer.fit_transform(recipes['processed_ingredients'])
+
+# Function to recommend recipes based on available ingredients
+def recommend_recipes(available_ingredients, n=5):
+    processed_input = preprocess_text(' '.join(available_ingredients))
+    input_vector = vectorizer.transform([processed_input])
+    similarities = cosine_similarity(input_vector, ingredients_matrix)
+    recommendations = similarities.argsort()[0][-n:][::-1]
+    return recipes.iloc[recommendations]
+
+# Example usage of the recommendation function
+available_ingredients = ['chicken', 'tomato', 'garlic']
+print(recommend_recipes(available_ingredients))
+
+# Class to manage IoT-based Smart Cooker
+class SmartCooker:
+    def __init__(self):
+        # Initialization code for IoT devices
+        pass
+    
+    def set_temperature(self, temp):
+        # Code to set temperature on the cooker
+        pass
+    
+    def set_timer(self, time):
+        # Code to set a timer on the cooker
+        pass
+    
+    def start_cooking(self):
+        # Code to start the cooking process
+        pass
+
+# Example usage of SmartCooker
+cooker = SmartCooker()
+cooker.set_temperature(180)  # Set temperature in Celsius
+cooker.set_timer(30)  # Set timer in minutes
+cooker.start_cooking()
+
+# Class to manage inventory
+class InventoryManager:
+    def __init__(self):
+        self.inventory = {}
+    
+    def add_item(self, item, quantity):
+        if item in self.inventory:
+            self.inventory[item] += quantity
+        else:
+            self.inventory[item] = quantity
+    
+    def remove_item(self, item, quantity):
+        if item in self.inventory and self.inventory[item] >= quantity:
+            self.inventory[item] -= quantity
+            if self.inventory[item] == 0:
+                del self.inventory[item]
+        else:
+            print(f"Not enough {item} in inventory.")
+    
+    def check_inventory(self):
+        return self.inventory
+
+# Example usage of InventoryManager
+inventory = InventoryManager()
+inventory.add_item('rice', 5)
+inventory.add_item('lentils', 2)
+inventory.remove_item('rice', 2)
+print(inventory.check_inventory())
